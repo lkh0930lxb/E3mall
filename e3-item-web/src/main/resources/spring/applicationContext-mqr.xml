@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+	http://www.springframework.org/schema/context 
+	http://www.springframework.org/schema/context/spring-context-4.0.xsd
+	http://www.springframework.org/schema/aop 
+	http://www.springframework.org/schema/aop/spring-aop-4.0.xsd
+	http://www.springframework.org/schema/tx
+	http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+	http://www.springframework.org/schema/mvc
+	http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd
+	http://www.springframework.org/schema/util
+	http://www.springframework.org/schema/util/spring-util-4.0.xsd">
+	<!-- activeMQ消息服务地址交给spring管理 -->
+	<bean id="targetConnectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory">
+		<constructor-arg name="brokerURL" value="tcp://192.168.66.66:61616"></constructor-arg>
+	</bean>
+	<!-- 使用spring JMS组件提供工厂,管理acitiveMQ消息服务器 -->
+	<bean id="connectionFactory"
+		class="org.springframework.jms.connection.SingleConnectionFactory">
+		<property name="targetConnectionFactory" ref="targetConnectionFactory"></property>
+	</bean>
+
+	<!-- 创建消息发送空间: 点对点模式 -->
+	<!-- <bean id="queue" class="org.apache.activemq.command.ActiveMQQueue">
+		<constructor-arg value="myQueue"></constructor-arg>
+	</bean> -->
+	<!-- 创建消息发送空间: 发不订阅模式 -->
+	<bean id="topic" class="org.apache.activemq.command.ActiveMQTopic">
+		<constructor-arg value="add_update_del_topic"></constructor-arg>
+	</bean>
+
+	<!-- 接受消息监听器:自定义监听器 -->
+	<bean id="messageListener" class="cn.e3mall.item.listener.FMListener"></bean>
+	<!-- 接受消息默认监听容器 -->
+	<!-- spring jms提供监听容器,自动接受消息 -->
+	<bean
+		class="org.springframework.jms.listener.DefaultMessageListenerContainer">
+		<!-- 指定接受消息服务器地址 -->
+		<property name="connectionFactory" ref="connectionFactory"></property>
+		<!-- 指定接受消息空间 : 点对点,发布订阅 -->
+		<property name="destination" ref="topic"></property>
+		<!-- 指定接受消息监听器 -->
+		<property name="messageListener" ref="messageListener"></property>
+	</bean>
+</beans>
